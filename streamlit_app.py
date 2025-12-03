@@ -11,6 +11,7 @@ conn = sqlite3.connect("faculty_ratings.db", check_same_thread=False)
 cur = conn.cursor()
 
 def init_db():
+    # Base tables
     cur.execute("""
         CREATE TABLE IF NOT EXISTS faculty (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,6 +19,8 @@ def init_db():
             department TEXT
         )
     """)
+
+    # Create rating table if not exists (basic)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS rating (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,11 +30,19 @@ def init_db():
             correction INTEGER NOT NULL,
             comment TEXT,
             created_at TEXT NOT NULL,
-            user_email TEXT,
-            reg_no TEXT,
             FOREIGN KEY (faculty_id) REFERENCES faculty (id)
         )
     """)
+
+    # --- Schema migration: ensure user_email and reg_no columns exist ---
+    cur.execute("PRAGMA table_info(rating)")
+    cols = [row[1] for row in cur.fetchall()]  # column names
+
+    if "user_email" not in cols:
+        cur.execute("ALTER TABLE rating ADD COLUMN user_email TEXT")
+    if "reg_no" not in cols:
+        cur.execute("ALTER TABLE rating ADD COLUMN reg_no TEXT")
+
     conn.commit()
 
 init_db()
@@ -86,7 +97,8 @@ def get_faculty_by_id(fid: int):
 def add_rating(faculty_id, leniency, internal_marks, correction, comment, user_email, reg_no):
     created_at = datetime.datetime.now().isoformat(timespec="minutes")
     cur.execute("""
-        INSERT INTO rating (faculty_id, leniency, internal_marks, correction, comment, created_at, user_email, reg_no)
+        INSERT INTO rating (faculty_id, leniency, internal_marks, correction,
+                            comment, created_at, user_email, reg_no)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         faculty_id,
@@ -102,7 +114,8 @@ def add_rating(faculty_id, leniency, internal_marks, correction, comment, user_e
 
 def get_ratings_for_faculty(faculty_id):
     cur.execute("""
-        SELECT leniency, internal_marks, correction, comment, created_at, user_email, reg_no
+        SELECT leniency, internal_marks, correction, comment, created_at,
+               user_email, reg_no
         FROM rating
         WHERE faculty_id = ?
         ORDER BY datetime(created_at) DESC
@@ -195,7 +208,7 @@ if st.session_state.logged_in:
         st.session_state.logged_in = False
         st.session_state.user_email = None
         st.session_state.reg_no = None
-        st.experimental_rerun()
+        st.rerun()          # <-- fixed here
 else:
     st.sidebar.info("Not logged in")
 
@@ -231,7 +244,7 @@ if page == "Login / Profile":
                 st.session_state.user_email = email.strip()
                 st.session_state.reg_no = reg_no
                 st.success("Login successful!")
-                st.experimental_rerun()
+                st.rerun()   # <-- fixed here
 
 # ---------------------------
 # Page: Add Faculty
