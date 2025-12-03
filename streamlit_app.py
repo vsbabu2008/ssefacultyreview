@@ -228,7 +228,7 @@ def require_login():
 # ---------------------------
 
 st.set_page_config(
-    page_title="Faculty Rating Portal",
+    page_title="SSE Faculty Rating Portal",
     page_icon="⭐",
     layout="wide",
 )
@@ -239,7 +239,7 @@ if "logged_in" not in st.session_state:
     st.session_state.user_email = None
     st.session_state.reg_no = None
 
-st.title("⭐ College Faculty Review")
+st.title("⭐ SIMATS Faculty Review")
 st.caption("Rate faculty based on **Leniency (1–10)**, **Internal Marks Range (50–100)**, **Correction (1–10)**, and **Overall Teaching Experience (1–10)**.")
 
 # Sidebar
